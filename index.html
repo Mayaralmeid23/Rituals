@@ -1,0 +1,1657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Ritual — Android prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #0a0a0e; color: #f4eef8;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- tweaks-panel.jsx -->
+  <script type="text/babel">
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;overflow-wrap:anywhere}
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+  .twk-num{display:flex;align-items:center;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+  .twk-chips{display:flex;gap:6px}
+  .twk-chip{position:relative;appearance:none;flex:1;min-width:0;height:46px;
+    padding:0;border:0;border-radius:6px;overflow:hidden;cursor:default;
+    box-shadow:0 0 0 .5px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.06);
+    transition:transform .12s cubic-bezier(.3,.7,.4,1),box-shadow .12s}
+  .twk-chip:hover{transform:translateY(-1px);
+    box-shadow:0 0 0 .5px rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.12)}
+  .twk-chip[data-on="1"]{box-shadow:0 0 0 1.5px rgba(0,0,0,.85),0 2px 6px rgba(0,0,0,.15)}
+  .twk-chip>span{position:absolute;top:0;bottom:0;right:0;width:34%;
+    display:flex;flex-direction:column;box-shadow:-1px 0 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i{flex:1;box-shadow:0 -1px 0 rgba(0,0,0,.1)}
+  .twk-chip>span>i:first-child{box-shadow:none}
+  .twk-chip svg{position:absolute;top:6px;left:6px;width:13px;height:13px;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+`;
+
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+    window.dispatchEvent(new CustomEvent('tweakchange', { detail: edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+function TweaksPanel({ title = 'Tweaks', noDeckControls = false, children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = { x: startRight - (ev.clientX - sx), y: startBottom - (ev.clientY - sy) };
+      clampToViewport();
+    };
+    const up = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', up); };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" data-noncommentable=""
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+function TweakSection({ label, children }) {
+  return <><div className="twk-sect">{label}</div>{children}</>;
+}
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakSelect, TweakText,
+});
+  </script>
+
+  <!-- gradient.jsx -->
+  <script type="text/babel">
+const SKY_STATES = [
+  { h:  0, top:'#090d1e', mid:'#0b0a1c', bot:'#08071a', glow:'#16123a', gx:50, gy:55, gs:40, mp:52, mode:'dark' },
+  { h:  4, top:'#0c1128', mid:'#0e0e28', bot:'#0c0a22', glow:'#1e1848', gx:50, gy:55, gs:38, mp:52, mode:'dark' },
+  { h:  6, top:'#1a4870', mid:'#6090b0', bot:'#f0a818', glow:'#f0a818', gx:50, gy:100, gs:50, mp:82, mode:'light' },
+  { h:  9, top:'#60b0d8', mid:'#d09848', bot:'#f8c030', glow:'#f8c030', gx:50, gy:92,  gs:68, mp:72, mode:'light' },
+  { h: 12, top:'#50a8d8', mid:'#e8b410', bot:'#f8d040', glow:'#f0c010', gx:50, gy:52,  gs:80, mp:52, mode:'light' },
+  { h: 15, top:'#c86830', mid:'#e08830', bot:'#f0b820', glow:'#e89820', gx:52, gy:28,  gs:74, mp:40, mode:'light' },
+  { h: 18, top:'#c04030', mid:'#c06070', bot:'#7060a0', glow:'#cc5030', gx:50, gy:14,  gs:64, mp:50, mode:'dusk' },
+  { h: 20, top:'#4a2860', mid:'#3c3070', bot:'#2c2860', glow:'#6a3898', gx:50, gy:50,  gs:58, mp:52, mode:'dark' },
+  { h: 22, top:'#141e3a', mid:'#1c1848', bot:'#151030', glow:'#4030a0', gx:50, gy:52,  gs:55, mp:52, mode:'dark' },
+  { h: 24, top:'#090d1e', mid:'#0b0a1c', bot:'#08071a', glow:'#16123a', gx:50, gy:55,  gs:40, mp:52, mode:'dark' },
+];
+
+function hex2rgb(h) {
+  const m = h.replace('#','');
+  return [parseInt(m.slice(0,2),16), parseInt(m.slice(2,4),16), parseInt(m.slice(4,6),16)];
+}
+function rgb2hex(r,g,b) {
+  const c = v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2,'0');
+  return '#'+c(r)+c(g)+c(b);
+}
+function lerp(a,b,t) { return a + (b-a)*t; }
+function lerpHex(a,b,t) {
+  const A = hex2rgb(a), B = hex2rgb(b);
+  return rgb2hex(lerp(A[0],B[0],t), lerp(A[1],B[1],t), lerp(A[2],B[2],t));
+}
+function smooth(t) { return t*t*(3-2*t); }
+
+function skyAt(hour) {
+  const h = ((hour % 24) + 24) % 24;
+  let a = SKY_STATES[0], b = SKY_STATES[1];
+  for (let i = 0; i < SKY_STATES.length - 1; i++) {
+    if (h >= SKY_STATES[i].h && h <= SKY_STATES[i+1].h) { a = SKY_STATES[i]; b = SKY_STATES[i+1]; break; }
+  }
+  const span = b.h - a.h;
+  const tRaw = span > 0 ? (h - a.h) / span : 0;
+  const t = smooth(tRaw);
+  return {
+    top: lerpHex(a.top, b.top, t), mid: lerpHex(a.mid, b.mid, t),
+    bot: lerpHex(a.bot, b.bot, t), glow: lerpHex(a.glow, b.glow, t),
+    gx: lerp(a.gx, b.gx, t), gy: lerp(a.gy, b.gy, t),
+    gs: lerp(a.gs, b.gs, t), mp: lerp(a.mp, b.mp, t),
+    mode: (h >= 18.5 || h < 6) ? 'dark' : 'light',
+    hour: h,
+  };
+}
+
+const STARS = (() => {
+  const rand = (seed) => { let x = Math.sin(seed) * 10000; return x - Math.floor(x); };
+  return Array.from({ length: 48 }, (_, i) => ({
+    x: rand(i * 3.1 + 0.5) * 100, y: rand(i * 7.3 + 1.2) * 65,
+    r: rand(i * 5.7 + 2.3) * 1.2 + 0.4, delay: rand(i * 2.9 + 0.7) * 4,
+    dur: rand(i * 4.1 + 1.8) * 3 + 2.5, opacity: rand(i * 6.2 + 0.3) * 0.5 + 0.25,
+  }));
+})();
+
+function Stars({ visibility }) {
+  if (visibility <= 0) return null;
+  return (
+    <div style={{ position:'absolute', inset:0, pointerEvents:'none', opacity: visibility, transition:'opacity 2s ease' }}>
+      <style>{`@keyframes starTwinkle { 0%, 100% { opacity: var(--star-base, 0.5); transform: scale(1); } 50% { opacity: calc(var(--star-base, 0.5) * 0.2); transform: scale(0.65); } }`}</style>
+      {STARS.map((s, i) => (
+        <div key={i} style={{
+          position:'absolute', left:`${s.x}%`, top:`${s.y}%`,
+          width: s.r * 2, height: s.r * 2, borderRadius:'50%', background:'#fff',
+          '--star-base': s.opacity,
+          animation: `starTwinkle ${s.dur}s ease-in-out ${s.delay}s infinite`,
+          filter: s.r > 1.1 ? 'blur(0.4px)' : 'none',
+          boxShadow: s.r > 1.2 ? `0 0 ${s.r * 3}px rgba(255,255,255,0.35)` : 'none',
+        }} />
+      ))}
+    </div>
+  );
+}
+
+const GRAIN_DATA_URI = (() => {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(#n)' opacity='0.7'/></svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+})();
+
+function SkyBackground({ hour, grain = true, style = {}, children }) {
+  const s = skyAt(hour);
+  const h = s.hour;
+  const starVis = (() => {
+    if (h >= 20 && h < 22) return (h - 20) / 2;
+    if (h >= 22 || h < 4)  return 1;
+    if (h >= 4  && h < 6)  return 1 - (h - 4) / 2;
+    return 0;
+  })();
+  return (
+    <div style={{
+      position:'absolute', inset:0, overflow:'hidden',
+      background: `radial-gradient(110% 55% at ${s.gx}% ${s.gy}%, ${s.glow}bb 0%, ${s.glow}00 ${Math.round(s.gs)}%), linear-gradient(180deg, ${s.top} 0%, ${s.mid} ${Math.round(s.mp)}%, ${s.bot} 100%)`,
+      transition:'background 1.2s linear',
+      ...style,
+    }}>
+      <Stars visibility={starVis} />
+      {grain && (
+        <div style={{
+          position:'absolute', inset:0,
+          backgroundImage:`url("${GRAIN_DATA_URI}")`,
+          backgroundSize:'240px 240px',
+          mixBlendMode:'soft-light',
+          opacity: s.mode === 'dark' ? 0.45 : 0.3,
+          pointerEvents:'none',
+        }} />
+      )}
+      <div style={{
+        position:'absolute', inset:0,
+        background: s.mode === 'dark'
+          ? 'radial-gradient(120% 100% at 50% 100%, transparent 40%, rgba(0,0,0,0.4) 100%)'
+          : 'radial-gradient(120% 100% at 50% 0%, transparent 55%, rgba(60,20,10,0.08) 100%)',
+        pointerEvents:'none',
+      }} />
+      {children}
+    </div>
+  );
+}
+
+function useHour(override, speed = 1) {
+  const [hour, setHour] = React.useState(() => {
+    if (override != null) return override;
+    const d = new Date();
+    return d.getHours() + d.getMinutes()/60 + d.getSeconds()/3600;
+  });
+  React.useEffect(() => {
+    if (override != null) { setHour(override); return; }
+    let raf, last = performance.now();
+    const tick = (now) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      setHour(h => (h + (dt * speed) / 60) % 24);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [override, speed]);
+  return hour;
+}
+
+Object.assign(window, { SkyBackground, useHour, skyAt, SKY_STATES });
+  </script>
+
+  <!-- screens.jsx -->
+  <script type="text/babel">
+const PHONE_W = 360, PHONE_H = 760;
+
+const T = {
+  display: { fontFamily: "'Syne', sans-serif", fontWeight: 700, lineHeight: 1.04, letterSpacing: '-0.02em' },
+  body:    { fontFamily: "'DM Sans', sans-serif", fontWeight: 400, lineHeight: 1.45 },
+  bodyMed: { fontFamily: "'DM Sans', sans-serif", fontWeight: 500, lineHeight: 1.45 },
+  bodyBold:{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, lineHeight: 1.45 },
+  italic:  { fontFamily: "'DM Sans', sans-serif", fontWeight: 400, fontStyle: 'italic', lineHeight: 1.35 },
+};
+
+function palette(mode) {
+  const dark = mode === 'dark';
+  return {
+    fg:        dark ? '#f4eef8' : '#1a1410',
+    fgMute:    dark ? 'rgba(244,238,248,0.62)' : 'rgba(26,20,16,0.62)',
+    fgFaint:   dark ? 'rgba(244,238,248,0.38)' : 'rgba(26,20,16,0.42)',
+    surface:   dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.40)',
+    surfaceHi: dark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.55)',
+    line:      dark ? 'rgba(244,238,248,0.12)' : 'rgba(26,20,16,0.14)',
+    fab:       dark ? '#ffffff' : '#221814',
+    fabFg:     dark ? '#221814' : '#ffffff',
+    check:     dark ? 'rgba(255,255,255,0.85)' : 'rgba(26,20,16,0.65)',
+  };
+}
+
+const Icon = {
+  menu: ({ size=22 }) => (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M3 7h16M3 15h16"/></svg>
+  ),
+  arrow: ({ size=22 }) => (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 11h13M13 6l5 5-5 5"/></svg>
+  ),
+  clock: ({ size=22 }) => (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="M11 6.5V11l3 2"/></svg>
+  ),
+  edit: ({ size=18 }) => (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 3.5l4 4-11 11H3.5v-4z"/><path d="M12 6l4 4"/></svg>
+  ),
+  more: ({ size=18 }) => (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="currentColor"><circle cx="11" cy="4.5" r="1.5"/><circle cx="11" cy="11" r="1.5"/><circle cx="11" cy="17.5" r="1.5"/></svg>
+  ),
+  plus: ({ size=22 }) => (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M11 4v14M4 11h14"/></svg>
+  ),
+  image: ({ size=20 }) => (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="16" height="14" rx="2"/><circle cx="8" cy="9" r="1.4"/><path d="M3 15l4.5-4 4 3.5L15 11l4 4"/></svg>
+  ),
+  mic: ({ size=20 }) => (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a6 6 0 0012 0M11 17v3"/></svg>
+  ),
+};
+
+function PhoneShell({ hour, children, screenLabel, overlay = false }) {
+  const sky = skyAt(hour);
+  const c = palette(sky.mode);
+  const overlayColor = sky.mode === 'dark' ? 'rgba(8,5,20,0.50)' : 'rgba(255,255,255,0.50)';
+  return (
+    <div data-screen-label={screenLabel} style={{
+      width: PHONE_W, height: PHONE_H,
+      borderRadius: 38, overflow: 'hidden', position: 'relative',
+      border: '8px solid #1d1a18',
+      boxShadow: '0 40px 90px -30px rgba(0,0,0,0.55), 0 12px 28px -10px rgba(0,0,0,0.3)',
+      background: '#000',
+      flex: '0 0 auto',
+    }}>
+      <SkyBackground hour={hour}>
+        {overlay && (
+          <div style={{ position:'absolute', inset:0, background: overlayColor, zIndex:1, pointerEvents:'none' }} />
+        )}
+        <StatusBar mode={sky.mode} />
+        <div style={{ position:'absolute', top:10, left:'50%', transform:'translateX(-50%)', width: 9, height: 9, borderRadius: 999, background: '#0a0a0a', boxShadow:'inset 0 0 0 1px rgba(255,255,255,0.05)' }} />
+        <div style={{ position: 'absolute', top: 28, left: 0, right: 0, bottom: 0, color: c.fg, ...T.body, display: 'flex', flexDirection: 'column', zIndex: 2 }}>
+          {children}
+        </div>
+        <div style={{ position:'absolute', bottom: 6, left:0, right:0, display:'flex', justifyContent:'center', pointerEvents:'none' }}>
+          <div style={{ width: 110, height: 4, borderRadius: 2, background: sky.mode === 'dark' ? 'rgba(255,255,255,0.55)' : 'rgba(26,20,16,0.55)' }} />
+        </div>
+      </SkyBackground>
+    </div>
+  );
+}
+
+function StatusBar({ mode }) {
+  const c = mode === 'dark' ? '#f4eef8' : '#1a1410';
+  return (
+    <div style={{ position:'absolute', top:0, left:0, right:0, height: 28, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 18px', fontFamily:"'DM Sans', sans-serif", fontSize: 12, fontWeight: 500, color: c, opacity: 0.85, pointerEvents:'none', zIndex: 2 }}>
+      <div>9:30</div>
+      <div style={{ display:'flex', alignItems:'center', gap: 5 }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill={c}><path d="M6 11L0 5a8 8 0 0112 0L6 11z"/></svg>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill={c}><path d="M11 11V1L1 11h10z"/></svg>
+        <svg width="18" height="10" viewBox="0 0 18 10" fill="none"><rect x="0.5" y="0.5" width="14" height="9" rx="1.5" stroke={c}/><rect x="2" y="2" width="11" height="6" rx="0.5" fill={c}/><rect x="15" y="3.5" width="2" height="3" rx="0.5" fill={c}/></svg>
+      </div>
+    </div>
+  );
+}
+
+function ContentTopBar({ left, right, mode }) {
+  const c = palette(mode);
+  return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: '14px 22px 0 22px', color: c.fgMute, ...T.body, fontSize: 13 }}>
+      <div style={{ flex:1, paddingRight: 8, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{left}</div>
+      <div style={{ display:'flex', alignItems:'center', color: c.fg, opacity: 0.85, cursor:'pointer' }}>{right}</div>
+    </div>
+  );
+}
+
+function RitualRow({ title, status, subtitle, mode, onClick, alarm }) {
+  const c = palette(mode);
+  const done = status === 'done';
+  const label = status === 'done' ? 'completed' : status === 'doing' ? 'doing' : 'to do';
+  const trailing = done ? <Icon.edit /> : <Icon.arrow />;
+  const showSubtitle = !done && subtitle;
+  return (
+    <div onClick={onClick} style={{
+      margin: '0 18px 12px',
+      padding: done ? '12px 18px' : '14px 18px',
+      borderRadius: 14,
+      background: c.surface,
+      backdropFilter: 'blur(6px)',
+      WebkitBackdropFilter: 'blur(6px)',
+      display:'flex', alignItems:'center', gap: 14,
+      cursor:'pointer', transition:'background 0.2s',
+      opacity: done ? 0.78 : 1,
+    }}
+    onMouseEnter={e => e.currentTarget.style.background = c.surfaceHi}
+    onMouseLeave={e => e.currentTarget.style.background = c.surface}
+    >
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ display:'flex', flexWrap:'wrap', alignItems:'baseline', lineHeight:1.3, marginBottom: showSubtitle ? 4 : 0 }}>
+          <span style={{ ...T.bodyBold, fontSize:16, color:c.fg }}>{title}</span>
+          {alarm && <span style={{ ...T.body, fontSize:14, color:c.fgMute }}>&nbsp;• {alarm}</span>}
+          <span style={{ ...T.body, fontSize:14, color:c.fgMute }}>&nbsp;• {label}</span>
+        </div>
+        {showSubtitle && <div style={{ ...T.body, fontSize: 13, color: c.fgMute }}>{subtitle}</div>}
+      </div>
+      <div style={{ color: c.fg, opacity: 0.85, flexShrink: 0 }}>{trailing}</div>
+    </div>
+  );
+}
+
+function NotesSection({ notes, mode }) {
+  const c = palette(mode);
+  return (
+    <div style={{ padding: '14px 22px 0' }}>
+      <div style={{ ...T.bodyBold, fontSize: 15, color: c.fg, marginBottom: 12 }}>Today's notes</div>
+      {notes.map((n, i) => (
+        <div key={i} style={{ padding: '10px 0', borderTop: i === 0 ? 'none' : `1px solid ${c.line}`, display:'flex', alignItems:'flex-start', gap: 8 }}>
+          <div style={{ flex:1, minWidth: 0 }}>
+            <div style={{ ...T.body, fontSize: 12, color: c.fgMute, marginBottom: 3 }}>{n.time} • {n.tag}</div>
+            <div style={{ ...T.bodyMed, fontSize: 14.5, color: c.fg, lineHeight: 1.35 }}>{n.body}</div>
+          </div>
+          <button style={{ background:'transparent', border:'none', cursor:'pointer', color: c.fgMute, padding: 4, marginTop: 6 }}><Icon.more /></button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FAB({ mode, onClick, icon, size = 56, style = {} }) {
+  const c = palette(mode);
+  return (
+    <button onClick={onClick} style={{
+      position:'absolute', right: 22, bottom: 36,
+      width: size, height: size, borderRadius: size/2,
+      background: c.fab, color: c.fabFg, border:'none', cursor:'pointer',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      boxShadow:'0 12px 24px -8px rgba(0,0,0,0.35)',
+      transition:'transform 0.15s',
+      ...style,
+    }}
+    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+    >{icon || <Icon.plus />}</button>
+  );
+}
+
+Object.assign(window, { PhoneShell, StatusBar, ContentTopBar, RitualRow, NotesSection, FAB, Icon, palette, T, PHONE_W, PHONE_H });
+  </script>
+
+  <!-- features.jsx -->
+  <script type="text/babel">
+function MenuSheet({ mode, onClose, onNav }) {
+  const c = palette(mode);
+  const dark = mode === 'dark';
+  const items = [
+    {
+      id: 'settings', label: 'Rituals',
+      sub: 'Add and customize\nyour daily routines',
+      icon: (<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5h16M3 11h10M3 17h6"/><circle cx="17" cy="14" r="3"/><path d="M17 11v0M17 17v0"/></svg>),
+    },
+    {
+      id: 'insights', label: 'Insights',
+      sub: 'Track habits, streaks\nand reflections',
+      icon: (<svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18h16"/><path d="M6 18v-5M10 18V8M14 18v-9M18 18v-3"/></svg>),
+    },
+  ];
+  return (
+    <div onClick={onClose} style={{ position:'absolute', inset:0, zIndex:10, background:'rgba(0,0,0,0.22)', animation:'ritualFadeIn 0.18s ease-out' }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        position:'absolute', bottom:0, left:0, right:0,
+        background: dark ? 'rgba(12,8,22,0.82)' : 'rgba(255,248,236,0.82)',
+        backdropFilter:'blur(28px)', WebkitBackdropFilter:'blur(28px)',
+        borderRadius:'22px 22px 0 0',
+        padding:'10px 16px 32px',
+        animation:'ritualSlideUp 0.25s cubic-bezier(.2,.7,.2,1)',
+        boxShadow:`0 -1px 0 ${c.line}, 0 -28px 56px rgba(0,0,0,0.22)`,
+      }}>
+        <div style={{ width:36, height:4, borderRadius:2, background:c.line, margin:'2px auto 20px' }} />
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          {items.map(item => (
+            <button key={item.id} onClick={() => { onClose(); onNav(item.id); }} style={{
+              background: c.surface,
+              backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+              border:`1px solid ${c.line}`,
+              borderRadius:16, padding:'16px 15px',
+              display:'flex', flexDirection:'column', alignItems:'flex-start', gap:14,
+              cursor:'pointer', color:c.fg, textAlign:'left',
+              transition:'background 0.15s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = c.surfaceHi}
+            onMouseLeave={e => e.currentTarget.style.background = c.surface}
+            >
+              <div style={{ color:c.fg, opacity:0.85 }}>{item.icon}</div>
+              <div>
+                <div style={{ ...T.bodyBold, fontSize:15, color:c.fg, marginBottom:4 }}>{item.label}</div>
+                <div style={{ ...T.body, fontSize:12, color:c.fgMute, lineHeight:1.45, whiteSpace:'pre-line' }}>{item.sub}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const DEFAULT_RITUAL_FEATURES = [
+  { id:'intention',  label:'Intenção',   sub:'Escrever a intenção do dia', active:true  },
+  { id:'habits',     label:'Hábitos',    sub:'Lista de hábitos a seguir',  active:true  },
+  { id:'reflection', label:'Reflexão',   sub:'Espaço para reflexão livre', active:true  },
+  { id:'meditation', label:'Meditação',  sub:'Guia de meditação',          active:false },
+  { id:'gratitude',  label:'Gratidão',   sub:'3 coisas pelo que ser grato',active:false },
+  { id:'reminders',  label:'Lembretes',  sub:'Notificações de acompanhamento', active:false },
+];
+
+function Toggle({ active, onChange, mode }) {
+  const c = palette(mode);
+  return (
+    <button onClick={onChange} style={{
+      width:42, height:24, borderRadius:12, border:'none', cursor:'pointer', flexShrink:0,
+      background: active ? c.fab : c.line,
+      position:'relative', transition:'background 0.2s',
+    }}>
+      <div style={{ position:'absolute', top:3, left: active ? 20 : 3, width:18, height:18, borderRadius:9, background: active ? c.fabFg : c.fg, transition:'left 0.2s', opacity: active ? 1 : 0.6 }} />
+    </button>
+  );
+}
+
+function ConfigureRituais({ mode, onBack, rituals, setRituals }) {
+  const c = palette(mode);
+  const dark = mode === 'dark';
+  const [expanded, setExpanded] = React.useState(null);
+  const [addingNew, setAddingNew] = React.useState(false);
+  const [newName, setNewName] = React.useState('');
+
+  const toggleFeature = (rid, fid) => setRituals(rs => rs.map(r => r.id === rid ? { ...r, features: r.features.map(f => f.id === fid ? { ...f, active: !f.active } : f) } : r));
+  const updateRitualName = (rid, name) => setRituals(rs => rs.map(r => r.id === rid ? { ...r, name } : r));
+  const addRitual = () => {
+    if (!newName.trim()) return;
+    const id = 'ritual_' + Date.now();
+    setRituals(rs => [...rs, { id, name: newName.trim(), emoji:'✨', alarm: null, features: DEFAULT_RITUAL_FEATURES.map(f => ({ ...f })) }]);
+    setNewName(''); setAddingNew(false); setExpanded(id);
+  };
+
+  return (
+    <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column' }}>
+      <SkyBackground hour={dark ? 22 : 9}>
+        <div style={{ position:'absolute', top:28, left:0, right:0, bottom:0, display:'flex', flexDirection:'column', color:c.fg, overflowY:'auto' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 22px 0' }}>
+            <button onClick={onBack} style={{ background:'transparent', border:'none', cursor:'pointer', color:c.fg, padding:4, display:'flex' }}>
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5l-7 6 7 6"/></svg>
+            </button>
+            <div style={{ ...T.bodyBold, fontSize:16, color:c.fgMute }}>Meus rituais</div>
+          </div>
+          <div style={{ padding:'18px 18px 80px', display:'flex', flexDirection:'column', gap:10 }}>
+            {rituals.map(r => (
+              <div key={r.id} style={{ background:c.surface, backdropFilter:'blur(8px)', borderRadius:16, overflow:'hidden', border:`1px solid ${c.line}` }}>
+                <button onClick={() => setExpanded(e => e === r.id ? null : r.id)} style={{ width:'100%', background:'transparent', border:'none', display:'flex', alignItems:'center', gap:12, padding:'14px 16px', cursor:'pointer', color:c.fg, textAlign:'left' }}>
+                  <span style={{ fontSize:22 }}>{r.emoji}</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ ...T.bodyBold, fontSize:16, color:c.fg }}>{r.name}</div>
+                    {r.alarm && <div style={{ ...T.body, fontSize:12, color:c.fgMute, marginTop:2 }}>⏰ {r.alarm}</div>}
+                  </div>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke={c.fgMute} strokeWidth="1.6" strokeLinecap="round" style={{ transform: expanded===r.id ? 'rotate(180deg)':'rotate(0)', transition:'transform 0.2s' }}><path d="M4 6l5 5 5-5"/></svg>
+                </button>
+                {expanded === r.id && (
+                  <div style={{ padding:'0 16px 16px', borderTop:`1px solid ${c.line}` }}>
+                    <div style={{ marginTop:14, marginBottom:14 }}>
+                      <div style={{ ...T.body, fontSize:12, color:c.fgMute, marginBottom:6 }}>Nome</div>
+                      <input value={r.name} onChange={e => updateRitualName(r.id, e.target.value)}
+                        style={{ width:'100%', boxSizing:'border-box', ...T.bodyMed, fontSize:15, color:c.fg, background:c.surface, border:`1px solid ${c.line}`, borderRadius:10, padding:'10px 12px', outline:'none', caretColor:c.fg }} />
+                    </div>
+                    <div style={{ ...T.body, fontSize:12, color:c.fgMute, marginBottom:8 }}>Funcionalidades</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                      {r.features.map(f => (
+                        <div key={f.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', borderRadius:10, background: f.active ? (dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.55)') : 'transparent', border:`1px solid ${f.active ? c.line : 'transparent'}` }}>
+                          <div>
+                            <div style={{ ...T.bodyMed, fontSize:14, color:c.fg }}>{f.label}</div>
+                            <div style={{ ...T.body, fontSize:11.5, color:c.fgMute }}>{f.sub}</div>
+                          </div>
+                          <Toggle active={f.active} onChange={() => toggleFeature(r.id, f.id)} mode={mode} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            {addingNew ? (
+              <div style={{ background:c.surface, borderRadius:16, border:`1px solid ${c.line}`, padding:'14px 16px', display:'flex', gap:10, alignItems:'center' }}>
+                <input autoFocus value={newName} onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => { if(e.key==='Enter') addRitual(); if(e.key==='Escape') setAddingNew(false); }}
+                  placeholder="Nome do ritual"
+                  style={{ flex:1, ...T.bodyMed, fontSize:15, color:c.fg, background:'transparent', border:'none', outline:'none', caretColor:c.fg }} />
+                <button onClick={addRitual} style={{ ...T.bodyMed, fontSize:13, color:c.fabFg, background:c.fab, border:'none', borderRadius:999, padding:'8px 14px', cursor:'pointer' }}>Adicionar</button>
+                <button onClick={() => setAddingNew(false)} style={{ background:'transparent', border:'none', cursor:'pointer', color:c.fgMute, fontSize:20, padding:'2px 4px' }}>×</button>
+              </div>
+            ) : (
+              <button onClick={() => setAddingNew(true)} style={{ ...T.bodyMed, fontSize:14, color:c.fgMute, background:'transparent', border:`1.5px dashed ${c.line}`, borderRadius:16, padding:'14px 16px', width:'100%', cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10 }}>
+                <span style={{ width:28, height:28, borderRadius:999, border:`1.5px dashed ${c.line}`, display:'flex', alignItems:'center', justifyContent:'center' }}><Icon.plus size={14} /></span>
+                Adicionar ritual
+              </button>
+            )}
+          </div>
+        </div>
+      </SkyBackground>
+    </div>
+  );
+}
+
+function InsightsScreen({ mode, onBack, notes }) {
+  const c = palette(mode);
+  const dark = mode === 'dark';
+  const DAYS = ['D','S','T','Q','Q','S','S'];
+  const HABITS = ['Fill bottle','Medicine','Eat some fruit'];
+  const mockGrid = React.useMemo(() => HABITS.map(() => DAYS.map(() => Math.random() > 0.3)), []);
+  const streak = 4;
+  return (
+    <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column' }}>
+      <SkyBackground hour={dark ? 22 : 9}>
+        <div style={{ position:'absolute', top:28, left:0, right:0, bottom:0, display:'flex', flexDirection:'column', color:c.fg, overflowY:'auto' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 22px 0' }}>
+            <button onClick={onBack} style={{ background:'transparent', border:'none', cursor:'pointer', color:c.fg, padding:4, display:'flex' }}>
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5l-7 6 7 6"/></svg>
+            </button>
+            <div style={{ ...T.bodyBold, fontSize:16, color:c.fgMute }}>Insights</div>
+          </div>
+          <div style={{ padding:'20px 18px 80px', display:'flex', flexDirection:'column', gap:14 }}>
+            <div style={{ background:c.surface, backdropFilter:'blur(8px)', borderRadius:18, padding:'18px 20px', border:`1px solid ${c.line}`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div>
+                <div style={{ ...T.bodyBold, fontSize:13, color:c.fgMute, marginBottom:4 }}>Sequência atual</div>
+                <div style={{ display:'flex', alignItems:'baseline', gap:6 }}>
+                  <span style={{ ...T.display, fontSize:46, color:c.fg }}>{streak}</span>
+                  <span style={{ ...T.body, fontSize:14, color:c.fgMute }}>dias</span>
+                </div>
+              </div>
+              <div style={{ fontSize:42 }}>🔥</div>
+            </div>
+            <div style={{ background:c.surface, backdropFilter:'blur(8px)', borderRadius:18, padding:'18px 20px', border:`1px solid ${c.line}` }}>
+              <div style={{ ...T.bodyBold, fontSize:14, color:c.fg, marginBottom:14 }}>Hábitos — últimos 7 dias</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {HABITS.map((h, hi) => (
+                  <div key={h} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ ...T.body, fontSize:12, color:c.fgMute, width:90, flexShrink:0, textOverflow:'ellipsis', overflow:'hidden', whiteSpace:'nowrap' }}>{h}</div>
+                    <div style={{ display:'flex', gap:5, flex:1 }}>
+                      {DAYS.map((d, di) => (
+                        <div key={di} style={{ flex:1, aspectRatio:'1', borderRadius:6, background: mockGrid[hi][di] ? (dark ? 'rgba(244,238,248,0.85)' : 'rgba(26,20,16,0.80)') : c.line }} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display:'flex', gap:5, marginTop:8, paddingLeft:98 }}>
+                {DAYS.map((d,i) => <div key={i} style={{ flex:1, textAlign:'center', ...T.body, fontSize:10, color:c.fgFaint }}>{d}</div>)}
+              </div>
+            </div>
+            <div style={{ background:c.surface, backdropFilter:'blur(8px)', borderRadius:18, padding:'18px 20px', border:`1px solid ${c.line}` }}>
+              <div style={{ ...T.bodyBold, fontSize:14, color:c.fg, marginBottom:14 }}>Taxa de conclusão</div>
+              {[{ label:'Morning ritual', pct:86 }, { label:'Night ritual', pct:71 }].map(({ label, pct }) => (
+                <div key={label} style={{ marginBottom:12 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                    <div style={{ ...T.bodyMed, fontSize:13, color:c.fg }}>{label}</div>
+                    <div style={{ ...T.body, fontSize:13, color:c.fgMute }}>{pct}%</div>
+                  </div>
+                  <div style={{ height:5, borderRadius:3, background:c.line, overflow:'hidden' }}>
+                    <div style={{ height:'100%', borderRadius:3, width:`${pct}%`, background: dark ? '#f4eef8' : '#1a1410' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {notes.length > 0 && (
+              <div style={{ background:c.surface, backdropFilter:'blur(8px)', borderRadius:18, padding:'18px 20px', border:`1px solid ${c.line}` }}>
+                <div style={{ ...T.bodyBold, fontSize:14, color:c.fg, marginBottom:12 }}>Notas recentes</div>
+                {notes.slice(0,3).map((n, i) => (
+                  <div key={i} style={{ paddingTop:10, paddingBottom:10, borderTop: i===0 ? 'none' : `1px solid ${c.line}` }}>
+                    <div style={{ ...T.body, fontSize:11.5, color:c.fgMute, marginBottom:3 }}>{n.time} · {n.tag}</div>
+                    <div style={{ ...T.body, fontSize:13.5, color:c.fg }}>{n.body}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </SkyBackground>
+    </div>
+  );
+}
+
+function AlarmSheet({ mode, ritualName, currentAlarm, onSave, onClose }) {
+  const c = palette(mode);
+  const dark = mode === 'dark';
+  const [enabled, setEnabled] = React.useState(!!currentAlarm);
+  const [hh, setHh] = React.useState(() => currentAlarm ? currentAlarm.split(':')[0] : (ritualName.toLowerCase().includes('night') ? '22' : '07'));
+  const [mm, setMm] = React.useState(() => currentAlarm ? currentAlarm.split(':')[1] : '00');
+  const save = () => {
+    const h = String(Math.max(0, Math.min(23, parseInt(hh)||0))).padStart(2,'0');
+    const m = String(Math.max(0, Math.min(59, parseInt(mm)||0))).padStart(2,'0');
+    onSave(enabled ? `${h}:${m}` : null);
+    onClose();
+  };
+  const inputStyle = { ...T.display, fontSize:40, color:c.fg, textAlign:'center', background:c.surface, border:`1px solid ${c.line}`, borderRadius:12, padding:'10px 8px', outline:'none', caretColor:c.fg, width:72, boxSizing:'border-box' };
+  return (
+    <div onClick={onClose} style={{ position:'absolute', inset:0, zIndex:10, background:'rgba(0,0,0,0.3)', animation:'ritualFadeIn 0.18s ease-out', display:'flex', alignItems:'flex-end' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width:'100%', boxSizing:'border-box', background: dark ? 'rgba(14,10,26,0.97)' : 'rgba(252,246,234,0.97)', backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)', borderRadius:'22px 22px 0 0', padding:'10px 22px 32px', animation:'ritualSlideUp 0.25s cubic-bezier(.2,.7,.2,1)', boxShadow:'0 -24px 48px rgba(0,0,0,0.28)' }}>
+        <div style={{ width:36, height:4, borderRadius:2, background:c.line, margin:'2px auto 18px' }} />
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
+          <div>
+            <div style={{ ...T.bodyBold, fontSize:18, color:c.fg }}>Lembrete</div>
+            <div style={{ ...T.body, fontSize:13, color:c.fgMute, marginTop:2 }}>{ritualName}</div>
+          </div>
+          <Toggle active={enabled} onChange={() => setEnabled(v => !v)} mode={mode} />
+        </div>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:28, opacity: enabled ? 1 : 0.3, transition:'opacity 0.2s', pointerEvents: enabled ? 'auto' : 'none' }}>
+          <input type="number" value={hh} min="0" max="23" onChange={e => setHh(e.target.value.padStart(2,'0').slice(-2))} style={inputStyle} />
+          <div style={{ ...T.display, fontSize:40, color:c.fg, padding:'0 4px' }}>:</div>
+          <input type="number" value={mm} min="0" max="59" onChange={e => setMm(e.target.value.padStart(2,'0').slice(-2))} style={inputStyle} />
+        </div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button onClick={onClose} style={{ flex:1, ...T.bodyMed, fontSize:14, color:c.fgMute, background:'transparent', border:`1px solid ${c.line}`, borderRadius:999, padding:'12px', cursor:'pointer' }}>Cancelar</button>
+          <button onClick={save} style={{ flex:2, ...T.bodyMed, fontSize:14, color:c.fabFg, background:c.fab, border:'none', borderRadius:999, padding:'12px', cursor:'pointer' }}>Salvar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { MenuSheet, ConfigureRituais, InsightsScreen, AlarmSheet, Toggle });
+  </script>
+
+  <!-- app.jsx -->
+  <script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "hour": 10.16,
+  "autoTime": false,
+  "speed": 240,
+  "showGrain": true,
+  "intention": "To feel worthy and deserving of good things.",
+  "dateLabel": "Sat • May 2",
+  "showAllScreens": false,
+  "obsidianFolder": "Rituais"
+}/*EDITMODE-END*/;
+
+const GREETINGS = [
+  [ 0, "Can't sleep?" ],
+  [ 6, "Rise and shine, lovely." ],
+  [ 9, "Good morning, sunshine!" ],
+  [12, "Still here, dreamer." ],
+  [15, "Easy afternoon, you." ],
+  [18, "Soft hello, golden one." ],
+  [21, "Welcome back, stargazer." ],
+];
+function greetingFor(hour) {
+  const h = ((hour % 24) + 24) % 24;
+  let g = GREETINGS[0][1];
+  for (const [start, str] of GREETINGS) if (h >= start) g = str;
+  const i = g.indexOf(',');
+  return i === -1 ? [g, ''] : [g.slice(0, i + 1), g.slice(i + 1).trim()];
+}
+function formatTime(h) {
+  const hh = Math.floor(((h % 24) + 24) % 24);
+  const mm = Math.floor((h - Math.floor(h)) * 60);
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}h`;
+}
+
+function BackBtn({ onClick, mode }) {
+  const c = palette(mode);
+  return (
+    <button onClick={onClick} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: c.fg, padding: '0 8px 0 0', display: 'flex', alignItems: 'center' }}>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5l-7 6 7 6"/></svg>
+    </button>
+  );
+}
+
+const INIT_RITUAL_FEATURES = [
+  { id: 'intention',  label: 'Intenção',   sub: 'Escrever a intenção do dia', active: true  },
+  { id: 'habits',     label: 'Hábitos',    sub: 'Lista de hábitos a seguir',  active: true  },
+  { id: 'reflection', label: 'Reflexão',   sub: 'Espaço para reflexão livre', active: true  },
+  { id: 'meditation', label: 'Meditação',  sub: 'Guia de meditação',          active: false },
+  { id: 'gratitude',  label: 'Gratidão',   sub: '3 coisas pelo que ser grato',   active: false },
+  { id: 'reminders',  label: 'Lembretes',  sub: 'Notificações de acompanhamento', active: false },
+];
+
+function Checkbox({ checked, mode }) {
+  const c = palette(mode);
+  return (
+    <div style={{ width: 22, height: 22, borderRadius: 5, background: checked ? c.fab : 'transparent', border: `1.5px solid ${checked ? c.fab : c.check}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 }}>
+      {checked && <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke={c.fabFg} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7.5L6 10.5 11.5 4" /></svg>}
+    </div>
+  );
+}
+
+function BlinkingCursor({ color }) {
+  return <span style={{ position: 'absolute', top: 2, left: 0, display: 'inline-block', width: 2, height: 22, background: color, animation: 'ritualBlink 1.05s steps(2, start) infinite', pointerEvents: 'none' }} />;
+}
+
+function SmallFAB({ mode, icon, onClick }) {
+  return <button onClick={onClick} style={{ width: 44, height: 44, borderRadius: 22, background: '#f4eef8', color: '#221814', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 14px -4px rgba(0,0,0,0.35)' }}>{icon}</button>;
+}
+
+function HomeMorning({ hour, dateLabel, onNav, mode, morningStatus, nightStatus, intention, notes, onAddNote, onEditIntention, onOpenMenu, rituals }) {
+  const c = palette(mode);
+  const [line1, line2] = greetingFor(hour);
+  const intentionPublished = morningStatus === 'done';
+  const dateOnly = dateLabel.replace(/^[^•]+• /, '');
+  const mRitual = rituals.find(r => r.id === 'morning') || {};
+  const nRitual = rituals.find(r => r.id === 'night') || {};
+  return (
+    <>
+      <ContentTopBar mode={mode}
+        left={intentionPublished ? `Intention of the day • ${dateOnly}` : `${dateLabel.split(' • ')[0]} • ${formatTime(hour)}`}
+        right={<button onClick={onOpenMenu} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: c.fg, display: 'flex' }}><Icon.menu /></button>} />
+      <div style={{ padding: '18px 22px 22px' }}>
+        {intentionPublished
+          ? <h1 onClick={onEditIntention} style={{ ...T.display, margin: 0, fontSize: 32, color: c.fg, lineHeight: 1.1, cursor: 'pointer' }}>"{intention}"</h1>
+          : <h1 key={line1 + line2} style={{ ...T.display, margin: 0, fontSize: 44, color: c.fg, animation: 'ritualGreet 0.6s ease-out' }}>{line1}<br />{line2}</h1>
+        }
+      </div>
+      <RitualRow mode={mode} title="Morning ritual" alarm={mRitual.alarm} status={morningStatus} subtitle="Write down your intention for the day" onClick={() => onNav('morning')} />
+      <RitualRow mode={mode} title="Night ritual" alarm={nRitual.alarm} status={nightStatus} subtitle="Unwind, reflect and release" onClick={() => onNav('night')} />
+      <NotesSection notes={notes} mode={mode} />
+      <FAB mode={mode} icon={<Icon.plus />} onClick={onAddNote} />
+    </>
+  );
+}
+
+function MorningRitual({ hour, intention, dateLabel, onBack, onComplete, status, mode, startEditing, onOpenAlarm }) {
+  const c = palette(mode);
+  const isDone = status === 'done';
+  const [draft, setDraft] = React.useState(isDone ? intention : '');
+  const [editing, setEditing] = React.useState(!isDone || !!startEditing);
+  React.useEffect(() => { if (startEditing) setEditing(true); }, [startEditing]);
+  const [habits, setHabits] = React.useState([
+    { label: 'Fill bottle', done: false },
+    { label: 'Medicine', done: false },
+    { label: 'Eat some fruit', done: false },
+  ]);
+  const [adding, setAdding] = React.useState(false);
+  const [newHabit, setNewHabit] = React.useState('');
+  const newHabitRef = React.useRef(null);
+  const toggle = i => setHabits(h => h.map((x, j) => j === i ? { ...x, done: !x.done } : x));
+  const inputRef = React.useRef(null);
+  React.useEffect(() => { if (editing && inputRef.current) inputRef.current.focus(); }, [editing]);
+  React.useEffect(() => { if (adding && newHabitRef.current) newHabitRef.current.focus(); }, [adding]);
+  const commitHabit = () => {
+    const v = newHabit.trim();
+    if (v) setHabits(h => [...h, { label: v, done: false }]);
+    setNewHabit(''); setAdding(false);
+  };
+  return (
+    <>
+      <ContentTopBar mode={mode}
+        left={<div style={{ display: 'flex', alignItems: 'center' }}>
+          <BackBtn onClick={onBack} mode={mode} />
+          <span style={{ ...T.body, fontSize: 13, color: c.fgMute }}>{dateLabel.split(' • ')[0]} • {formatTime(hour)}</span>
+        </div>}
+        right={<button onClick={onOpenAlarm} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: c.fg, display: 'flex' }}><Icon.clock /></button>} />
+      <div style={{ padding: '18px 22px 14px' }}>
+        <h1 style={{ ...T.display, margin: 0, fontSize: 38, color: c.fg, marginBottom: 18 }}>Intention of the<br />day, May 2nd</h1>
+        {!editing ? (
+          <div onClick={() => setEditing(true)} style={{ position: 'relative', cursor: 'text', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <div style={{ ...T.italic, fontSize: 18, color: c.fg, opacity: 0.92, lineHeight: 1.32, minHeight: '5.3em', flex: 1 }}>"{draft || intention}"</div>
+            <button onClick={e => { e.stopPropagation(); setEditing(true); }} style={{ background: 'transparent', border: `1px solid ${c.line}`, color: c.fg, borderRadius: 999, padding: 6, cursor: 'pointer', display: 'flex', flexShrink: 0, marginTop: 2 }}><Icon.edit size={14} /></button>
+          </div>
+        ) : (
+          <div style={{ position: 'relative', minHeight: '5.3em' }}>
+            <textarea ref={inputRef} value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onPaste={e => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                const clean = text.replace(/\s+/g, ' ').trim();
+                const el = e.target;
+                const start = el.selectionStart, end = el.selectionEnd;
+                const next = draft.slice(0, start) + clean + draft.slice(end);
+                setDraft(next);
+                requestAnimationFrame(() => { el.selectionStart = el.selectionEnd = start + clean.length; });
+              }}
+              rows={4}
+              style={{ width: '100%', height: '5.3em', boxSizing: 'border-box', background: 'transparent', border: 'none', outline: 'none', resize: 'none', overflow: 'hidden', ...T.italic, fontSize: 18, color: c.fg, lineHeight: 1.32, caretColor: c.fg, padding: 0, margin: 0, opacity: 0.92 }} />
+            {draft === '' && <BlinkingCursor color={c.fg} />}
+          </div>
+        )}
+      </div>
+      <div style={{ padding: '20px 22px 0' }}>
+        <div style={{ ...T.bodyBold, fontSize: 14, color: c.fg, marginBottom: 14 }}>Habits</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {habits.map((h, i) => (
+            <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0', cursor: 'pointer' }} onClick={() => toggle(i)}>
+              <Checkbox checked={h.done} mode={mode} />
+              <span style={{ ...T.bodyMed, fontSize: 16, color: c.fg, textDecoration: h.done ? 'line-through' : 'none', opacity: h.done ? 0.55 : 1, transition: 'opacity 0.2s' }}>{h.label}</span>
+            </label>
+          ))}
+          {adding ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0' }}>
+              <Checkbox checked={false} mode={mode} />
+              <input ref={newHabitRef} value={newHabit} onChange={e => setNewHabit(e.target.value)}
+                onBlur={commitHabit} onKeyDown={e => { if (e.key === 'Enter') commitHabit(); if (e.key === 'Escape') { setNewHabit(''); setAdding(false); } }}
+                placeholder="New habit" style={{ ...T.bodyMed, fontSize: 16, color: c.fg, flex: 1, background: 'transparent', border: 'none', outline: 'none', padding: 0, caretColor: c.fg }} />
+            </div>
+          ) : (
+            <button onClick={() => setAdding(true)} style={{ ...T.bodyMed, fontSize: 14, color: c.fgMute, display: 'flex', alignItems: 'center', gap: 12, background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 0' }}>
+              <span style={{ width: 22, height: 22, borderRadius: 5, border: `1.5px dashed ${c.check}`, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.7 }}><Icon.plus size={14} /></span>
+              <span>Add habit</span>
+            </button>
+          )}
+        </div>
+      </div>
+      <div style={{ flex: 1 }} />
+      <div style={{ padding: '0 22px 30px', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        {editing && isDone && (
+          <button onClick={() => { setDraft(intention); setEditing(false); }} style={{ ...T.bodyMed, fontSize: 13, color: c.fgMute, background: 'transparent', border: 'none', padding: '10px 12px', cursor: 'pointer' }}>Cancel</button>
+        )}
+        <button disabled={editing && draft.trim() === ''}
+          onClick={() => { if (editing) { if (!draft.trim()) return; onComplete(draft.trim()); onBack(); } else setEditing(true); }}
+          style={{ ...T.bodyMed, fontSize: 13, color: c.fg, background: 'transparent', border: `1px solid ${c.line}`, borderRadius: 999, padding: '10px 18px', cursor: (editing && !draft.trim()) ? 'not-allowed' : 'pointer', backdropFilter: 'blur(6px)', opacity: (editing && !draft.trim()) ? 0.4 : 1, transition: 'opacity 0.2s' }}>
+          {editing ? (isDone ? 'Save changes' : 'Mark as complete') : 'Edit ritual'}
+        </button>
+      </div>
+    </>
+  );
+}
+
+function HomeNight({ hour, intention, dateLabel, onNav, morningStatus, nightStatus, mode, notes, onAddNote, onEditIntention, onOpenMenu, rituals }) {
+  const c = palette(mode);
+  const intentionPublished = morningStatus === 'done';
+  const [line1, line2] = greetingFor(hour);
+  const dateOnly = dateLabel.replace(/^[^•]+• /, '');
+  const mRitual = rituals.find(r => r.id === 'morning') || {};
+  const nRitual = rituals.find(r => r.id === 'night') || {};
+  return (
+    <>
+      <ContentTopBar mode={mode}
+        left={intentionPublished ? `Intention of the day • ${dateOnly}` : `${dateLabel.split(' • ')[0]} • ${formatTime(hour)}`}
+        right={<button onClick={onOpenMenu} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: c.fg, display: 'flex' }}><Icon.menu /></button>} />
+      <div style={{ padding: '14px 22px 22px' }}>
+        {intentionPublished
+          ? <h1 onClick={onEditIntention} style={{ ...T.display, margin: 0, fontSize: 32, color: c.fg, lineHeight: 1.1, cursor: 'pointer' }}>"{intention}"</h1>
+          : <h1 key={line1 + line2} style={{ ...T.display, margin: 0, fontSize: 40, color: c.fg, lineHeight: 1.05, animation: 'ritualGreet 0.6s ease-out' }}>{line1}<br />{line2}</h1>
+        }
+      </div>
+      <RitualRow mode={mode} title="Morning ritual" alarm={mRitual.alarm} status={morningStatus} subtitle="Write down your intention for the day" onClick={() => onNav('morning')} />
+      <RitualRow mode={mode} title="Night ritual" alarm={nRitual.alarm} status={nightStatus} subtitle="Unwind, reflect and release" onClick={() => onNav('night')} />
+      <NotesSection notes={notes} mode={mode} />
+      <FAB mode={mode} icon={<Icon.plus />} onClick={onAddNote} />
+    </>
+  );
+}
+
+function NoteComposer({ mode, hour, onSave, onClose }) {
+  const c = palette(mode);
+  const dark = mode === 'dark';
+  const [body, setBody] = React.useState('');
+  const [tag, setTag] = React.useState('mood');
+  const [voice, setVoice] = React.useState(false);
+  const [recording, setRecording] = React.useState(false);
+  const inputRef = React.useRef(null);
+  React.useEffect(() => { if (!voice && inputRef.current) inputRef.current.focus(); }, [voice]);
+  const stopVoice = () => { setRecording(false); setBody(b => b || 'Today felt long but I made it through.'); setVoice(false); };
+  const save = () => { if (!body.trim()) return; onSave({ time: formatTime(hour), tag, body: body.trim() }); onClose(); };
+  return (
+    <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 5, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'flex-end', animation: 'ritualFadeIn 0.2s ease-out' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', boxSizing: 'border-box', background: dark ? 'rgba(28,20,42,0.94)' : 'rgba(255,245,235,0.96)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRadius: '24px 24px 0 0', padding: '12px 18px 22px', boxShadow: '0 -20px 40px rgba(0,0,0,0.25)', animation: 'ritualSlideUp 0.28s cubic-bezier(.2,.7,.2,1)', color: c.fg }}>
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: c.line, margin: '2px auto 14px' }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ ...T.bodyBold, fontSize: 14 }}>New note</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {['mood', 'task', 'note'].map(k => (
+              <button key={k} onClick={() => setTag(k)} style={{ ...T.bodyMed, fontSize: 11.5, padding: '5px 10px', borderRadius: 999, border: `1px solid ${tag === k ? c.fg : c.line}`, background: tag === k ? c.fg : 'transparent', color: tag === k ? c.fabFg : c.fg, cursor: 'pointer' }}>{k}</button>
+            ))}
+          </div>
+        </div>
+        {!voice ? (
+          <textarea ref={inputRef} value={body} onChange={e => setBody(e.target.value)} placeholder="What's on your mind?" rows={3}
+            style={{ width: '100%', boxSizing: 'border-box', background: 'transparent', border: `1px solid ${c.line}`, borderRadius: 12, padding: 12, ...T.body, fontSize: 15, color: c.fg, outline: 'none', resize: 'none', caretColor: c.fg }} />
+        ) : (
+          <div style={{ border: `1px solid ${c.line}`, borderRadius: 12, padding: '22px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+            <button onClick={() => recording ? stopVoice() : setRecording(true)} style={{ width: 56, height: 56, borderRadius: 28, background: recording ? '#d6584a' : c.fab, color: c.fabFg, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: recording ? 'ritualPulse 1.4s ease-out infinite' : 'none' }}><Icon.mic size={22} /></button>
+            <div style={{ ...T.body, fontSize: 13, color: c.fgMute }}>{recording ? 'Listening… tap to stop' : 'Tap to record'}</div>
+          </div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+          <button onClick={() => setVoice(v => !v)} style={{ ...T.bodyMed, fontSize: 13, color: c.fg, background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, padding: 4 }}>
+            {voice ? <><Icon.edit size={16} /> Type instead</> : <><Icon.mic size={16} /> Voice instead</>}
+          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={onClose} style={{ ...T.bodyMed, fontSize: 13, color: c.fgMute, background: 'transparent', border: 'none', padding: '10px 12px', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={save} disabled={!body.trim()} style={{ ...T.bodyMed, fontSize: 13, background: c.fab, color: c.fabFg, border: 'none', borderRadius: 999, padding: '10px 18px', cursor: body.trim() ? 'pointer' : 'not-allowed', opacity: body.trim() ? 1 : 0.4 }}>Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Jungian Night Ritual — chat-based shadow work
+// ─────────────────────────────────────────────────────────────
+function NightRitual({ hour, onBack, onComplete, mode, onOpenAlarm, intention, notes, openaiKey, obsidianKey, obsidianFolder, dateLabel }) {
+  const c = palette(mode);
+  const dark = mode === 'dark';
+
+  const [messages, setMessages] = React.useState([]); // {role:'ai'|'user', content:string}
+  const [input, setInput] = React.useState('');
+  const [streamingContent, setStreamingContent] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [phase, setPhase] = React.useState('chat'); // 'chat' | 'ending' | 'saved' | 'error'
+  const [saveError, setSaveError] = React.useState('');
+  const inputRef = React.useRef(null);
+  const bottomRef = React.useRef(null);
+
+  const notesContext = notes.length
+    ? notes.map(n => `- [${n.tag}] ${n.body}`).join('\n')
+    : 'Nenhuma nota registrada.';
+
+  const systemPrompt = `Você é uma presença acolhedora e perspicaz que acompanha o journaling noturno de alguém. Seu papel é criar um espaço seguro para reflexão profunda — como um espelho gentil e inteligente.
+
+Você domina múltiplas abordagens psicológicas e as usa de forma fluida, nunca mecânica:
+
+PSICANÁLISE & JUNG
+— Padrões inconscientes, projeções, sombra, complexos, mecanismos de defesa (racionalização, negação, deslocamento), repetições que revelam feridas antigas.
+
+TCC (Terapia Cognitivo-Comportamental)
+— Distorções cognitivas (catastrofização, leitura mental, generalização, tudo-ou-nada), crenças centrais, pensamentos automáticos, a relação entre pensamento → emoção → comportamento.
+
+ACT (Terapia de Aceitação e Compromisso)
+— Fusão cognitiva, evitação experiencial, valores pessoais como bússola, a diferença entre o que você pode controlar e o que não pode.
+
+IFS (Sistema Familiar Interno)
+— Partes internas em conflito, a parte que protege e a parte que foi ferida, o Self como observador compassivo.
+
+CNV (Comunicação Não-Violenta)
+— Separar observação de julgamento, identificar necessidades não atendidas por trás das emoções.
+
+OUTRAS
+— Mindfulness: observar sem julgar. Terapia do esquema: padrões que se repetem desde a infância. Logoterapia: sentido por trás do sofrimento.
+
+Contexto do dia desta pessoa:
+- Intenção do dia: "${intention || 'não registrada'}"
+- Notas do dia:
+${notesContext}
+
+COMO SE COMPORTAR:
+
+Na primeira mensagem:
+— Faça apenas UMA pergunta aberta para iniciar o journaling, considerando o contexto do dia. Sem introdução. Só a pergunta.
+
+Nas respostas seguintes, siga esta estrutura:
+1. ESCUTA ATIVA — reflita o que a pessoa disse em 1-2 frases. Mostre que você ouviu de verdade, sem repetir mecanicamente.
+2. REFLEXÃO — ofereça uma observação, padrão ou insight usando a abordagem mais útil para aquele momento (1-2 frases). Pode nomear uma distorção cognitiva, uma parte interna, um mecanismo de defesa — mas de forma humana, não clínica.
+3. PERGUNTA — uma única pergunta que aprofunde a exploração.
+
+Se a pessoa pedir ajuda ou não souber por onde começar:
+— Sugira uma técnica concreta e simples: escrita livre por 5 min, escrever uma carta para uma emoção, listar pensamentos sem julgá-los, nomear o que sente no corpo agora, etc.
+
+Regras:
+• Sempre em português.
+• Uma pergunta por vez. Nunca duas.
+• Não aconselhe nem resolva — acompanhe e ilumine.
+• Respostas curtas e densas. Sem floreios.
+• Use o nome das técnicas só se ajudar a clareza — nunca para impressionar.`;
+
+  const callAI = React.useCallback(async (msgs) => {
+    if (!openaiKey) {
+      setMessages(prev => [...prev, { role: 'ai', content: 'Configure sua OpenAI API key no painel de Tweaks (ícone de engrenagem).' }]);
+      return;
+    }
+    setLoading(true);
+    setStreamingContent('');
+    const apiMessages = [
+      { role: 'system', content: systemPrompt },
+      ...msgs.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content })),
+    ];
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: 'gpt-4o', messages: apiMessages, stream: true, max_tokens: 380, temperature: 0.88 }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setMessages(prev => [...prev, { role: 'ai', content: `Erro API: ${err.error?.message || res.statusText}` }]);
+        setLoading(false); return;
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let content = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const lines = dec.decode(value, { stream: true }).split('\n');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const delta = JSON.parse(data).choices?.[0]?.delta?.content || '';
+            content += delta;
+            setStreamingContent(content);
+          } catch {}
+        }
+      }
+      setMessages(prev => [...prev, { role: 'ai', content }]);
+      setStreamingContent('');
+      setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 80);
+    } catch (e) {
+      setMessages(prev => [...prev, { role: 'ai', content: `Erro de conexão: ${e.message}` }]);
+      setLoading(false);
+    }
+  }, [openaiKey, systemPrompt]);
+
+  // Open with the AI's first question
+  React.useEffect(() => { callAI([]); }, []);
+
+  React.useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, streamingContent]);
+
+  const send = () => {
+    const txt = input.trim();
+    if (!txt || loading) return;
+    const newMsg = { role: 'user', content: txt };
+    const updated = [...messages, newMsg];
+    setMessages(updated);
+    setInput('');
+    callAI(updated);
+  };
+
+  const endSession = async () => {
+    if (!openaiKey) { setPhase('error'); setSaveError('OpenAI API key não configurada.'); return; }
+    setPhase('ending');
+    // Generate summary
+    const summaryMessages = [
+      { role: 'system', content: `${systemPrompt}\n\nAgora gere uma SÍNTESE em 2-3 parágrafos desta conversa. Destaque os padrões de sombra identificados, o que emergiu, e um convite final para a individuação. Escreva em português, em tom literário e psicanalítico.` },
+      ...messages.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content })),
+      { role: 'user', content: 'Por favor, gere a síntese desta conversa.' },
+    ];
+    let summary = '';
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: 'gpt-4o', messages: summaryMessages, max_tokens: 500, temperature: 0.8 }),
+      });
+      const data = await res.json();
+      summary = data.choices?.[0]?.message?.content || 'Síntese não gerada.';
+    } catch (e) {
+      summary = 'Erro ao gerar síntese.';
+    }
+    // Format conversation
+    const conversationMd = messages.map(m =>
+      m.role === 'ai' ? `**Analista:** ${m.content}` : `**Você:** ${m.content}`
+    ).join('\n\n');
+    // Date
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const dateBR = `${dd}/${mm}/${yyyy}`;
+    const folder = (obsidianFolder || 'Rituais').replace(/\/$/, '');
+    const filename = `${dateStr}-ritual-noturno.md`;
+    const fileContent = `---\ndate: ${dateStr}\ntags: [ritual, reflexão, shadow-work]\n---\n\n# ${dateBR}\n\n**Intenção do dia:** "${intention || '—'}"\n\n---\n\n## Síntese\n\n${summary}\n\n---\n\n## Conversa completa\n\n${conversationMd}\n`;
+    // Try local server first; fallback to download
+    let savedLocally = false;
+    try {
+      const saveRes = await fetch('http://localhost:8765/save-note', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folder: obsidianFolder || 'Rituais', filename, content: fileContent }),
+        signal: AbortSignal.timeout(3000),
+      });
+      if (saveRes.ok) savedLocally = true;
+    } catch {}
+
+    if (!savedLocally) {
+      // Download the .md file so the user can drag into Obsidian
+      const blob = new Blob([fileContent], { type: 'text/markdown' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    setPhase('saved');
+    setSaveError(savedLocally ? '' : 'Servidor local offline — arquivo baixado. Arraste para o vault do Obsidian.');
+    onComplete();
+  };
+
+  const showEnd = messages.filter(m => m.role === 'user').length >= 2;
+
+  return (
+    <>
+      <ContentTopBar mode={mode}
+        left={<div style={{ display: 'flex', alignItems: 'center' }}>
+          <BackBtn onClick={onBack} mode={mode} />
+          <span style={{ ...T.body, fontSize: 13, color: c.fgMute }}>Ritual noturno</span>
+        </div>}
+        right={<button onClick={onOpenAlarm} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: c.fg, display: 'flex' }}><Icon.clock /></button>} />
+
+      {/* Messages scroll area */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 18px 8px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {messages.map((m, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: m.role === 'ai' ? 'flex-start' : 'flex-end' }}>
+            {m.role === 'ai' ? (
+              <div style={{ maxWidth: '88%', ...T.italic, fontSize: 15, color: c.fg, lineHeight: 1.55, opacity: 0.92 }}>{m.content}</div>
+            ) : (
+              <div style={{ maxWidth: '82%', background: c.surface, backdropFilter: 'blur(8px)', borderRadius: '14px 14px 4px 14px', padding: '10px 14px', ...T.body, fontSize: 14.5, color: c.fg, lineHeight: 1.45 }}>{m.content}</div>
+            )}
+          </div>
+        ))}
+
+        {/* Streaming */}
+        {(loading || streamingContent) && (
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <div style={{ maxWidth: '88%', ...T.italic, fontSize: 15, color: c.fg, lineHeight: 1.55, opacity: 0.92, position: 'relative' }}>
+              {streamingContent || ''}
+              <span style={{ display: 'inline-block', width: 2, height: 16, background: c.fg, marginLeft: 2, verticalAlign: 'text-bottom', animation: 'ritualBlink 1.05s steps(2,start) infinite', opacity: 0.7 }} />
+            </div>
+          </div>
+        )}
+
+        {/* Saved state */}
+        {phase === 'saved' && (
+          <div style={{ background: c.surface, borderRadius: 14, padding: '14px 16px', border: `1px solid ${c.line}`, ...T.body, fontSize: 13.5, color: c.fg, lineHeight: 1.5 }}>
+            {saveError
+              ? `⬇ ${saveError}`
+              : `✦ Salvo no Obsidian — /${obsidianFolder || 'Rituais'}/`}
+          </div>
+        )}
+
+        {phase === 'error' && (
+          <div style={{ background: 'rgba(214,88,74,0.12)', borderRadius: 14, padding: '12px 16px', border: '1px solid rgba(214,88,74,0.3)', ...T.body, fontSize: 13, color: c.fg, lineHeight: 1.5 }}>
+            {saveError}
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* End session button */}
+      {showEnd && phase === 'chat' && (
+        <div style={{ padding: '0 18px 8px', display: 'flex', justifyContent: 'center' }}>
+          <button onClick={endSession} style={{ ...T.bodyMed, fontSize: 12, color: c.fgMute, background: 'transparent', border: `1px solid ${c.line}`, borderRadius: 999, padding: '7px 18px', cursor: 'pointer', letterSpacing: '0.03em' }}>
+            Encerrar ritual · salvar no Obsidian
+          </button>
+        </div>
+      )}
+
+      {phase === 'ending' && (
+        <div style={{ padding: '0 18px 8px', textAlign: 'center', ...T.body, fontSize: 12, color: c.fgMute }}>
+          Gerando síntese e salvando…
+        </div>
+      )}
+
+      {/* Input */}
+      {phase === 'chat' && (
+        <div style={{ padding: '8px 18px 28px', display: 'flex', alignItems: 'flex-end', gap: 10 }}>
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+            placeholder="Escreva aqui…"
+            rows={1}
+            style={{ flex: 1, background: c.surface, backdropFilter: 'blur(8px)', border: `1px solid ${c.line}`, borderRadius: 14, padding: '10px 14px', ...T.body, fontSize: 14.5, color: c.fg, outline: 'none', resize: 'none', caretColor: c.fg, lineHeight: 1.45, maxHeight: 100, overflowY: 'auto' }}
+          />
+          <button onClick={send} disabled={!input.trim() || loading} style={{ width: 40, height: 40, borderRadius: 20, background: (!input.trim() || loading) ? c.line : c.fab, color: (!input.trim() || loading) ? c.fgFaint : c.fabFg, border: 'none', cursor: (!input.trim() || loading) ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 8h12M9 3l5 5-5 5"/></svg>
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Setup screen — shown on first open when no API key found
+// ─────────────────────────────────────────────────────────────
+function SetupScreen({ onSave }) {
+  const [key, setKey] = React.useState('');
+  const [error, setError] = React.useState('');
+  const save = () => {
+    if (!key.trim().startsWith('sk-')) { setError('A chave deve começar com sk-'); return; }
+    localStorage.setItem('ritual_openai_key', key.trim());
+    onSave(key.trim());
+  };
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(60% 60% at 50% 0%, #1a1a22 0%, #0a0a0e 70%)', padding: 24 }}>
+      <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 36, color: '#f4eef8', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Ritual</h1>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: 'rgba(244,238,248,0.6)', margin: 0, lineHeight: 1.5 }}>Para ativar o ritual noturno com IA, adicione sua chave da OpenAI. Ela fica salva só no seu dispositivo.</p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <input
+            value={key} onChange={e => { setKey(e.target.value); setError(''); }}
+            placeholder="sk-..."
+            type="password"
+            onKeyDown={e => e.key === 'Enter' && save()}
+            style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(244,238,248,0.15)', borderRadius: 12, padding: '14px 16px', color: '#f4eef8', outline: 'none', caretColor: '#f4eef8' }}
+          />
+          {error && <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: '#e07070' }}>{error}</div>}
+          <button onClick={save} style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 15, background: '#f4eef8', color: '#1a1410', border: 'none', borderRadius: 12, padding: '14px', cursor: 'pointer' }}>Entrar</button>
+        </div>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'rgba(244,238,248,0.35)', margin: 0, lineHeight: 1.5 }}>
+          A chave fica armazenada no localStorage do seu browser — nunca é enviada para nenhum servidor além da OpenAI.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [openaiKey, setOpenaiKey] = React.useState(() => localStorage.getItem('ritual_openai_key') || '');
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const liveHour = useHour(t.autoTime ? null : t.hour, t.speed);
+  const sky = skyAt(liveHour);
+  const mode = sky.mode;
+
+  const [screen, setScreen] = React.useState('auto');
+  const [morningStatus, setMorningStatus] = React.useState('todo');
+  const [nightStatus, setNightStatus] = React.useState('todo');
+  const [notes, setNotes] = React.useState([]);
+  const [composerOpen, setComposerOpen] = React.useState(false);
+  const [editIntent, setEditIntent] = React.useState(false);
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const [alarmTarget, setAlarmTarget] = React.useState(null);
+  const [rituals, setRituals] = React.useState([
+    { id: 'morning', name: 'Morning ritual', emoji: '🌅', alarm: null, features: INIT_RITUAL_FEATURES.map(f => ({ ...f })) },
+    { id: 'night',   name: 'Night ritual',   emoji: '🌙', alarm: null, features: INIT_RITUAL_FEATURES.map(f => ({ ...f })) },
+  ]);
+
+  React.useEffect(() => {
+    if (screen === 'morning' && morningStatus === 'todo') setMorningStatus('doing');
+    if (screen === 'night' && nightStatus === 'todo') setNightStatus('doing');
+  }, [screen]);
+
+  const resolved = React.useMemo(() => {
+    if (screen !== 'auto') return screen;
+    return mode === 'dark' ? 'nightHome' : 'morningHome';
+  }, [screen, mode]);
+
+  const goHome = () => setScreen(mode === 'dark' ? 'nightHome' : 'morningHome');
+  const editIntention = () => { setEditIntent(true); setScreen('morning'); };
+  const addNote = n => setNotes(prev => [n, ...prev]);
+  const saveAlarm = (ritualId, time) => setRituals(rs => rs.map(r => r.id === ritualId ? { ...r, alarm: time } : r));
+
+  const homeProps = {
+    hour: liveHour, dateLabel: t.dateLabel, mode,
+    morningStatus, nightStatus, intention: t.intention,
+    notes, onAddNote: () => setComposerOpen(true),
+    onEditIntention: editIntention,
+    onOpenMenu: () => setMenuOpen(true),
+    rituals,
+    onNav: k => setScreen(k === 'morning' ? 'morning' : 'night'),
+  };
+
+  let view;
+  if (resolved === 'morningHome') {
+    view = <HomeMorning {...homeProps} />;
+  } else if (resolved === 'morning') {
+    view = <MorningRitual hour={liveHour} intention={t.intention} dateLabel={t.dateLabel} mode={mode}
+              onBack={() => { setEditIntent(false); goHome(); }}
+              startEditing={editIntent}
+              onComplete={written => { if (written) setTweak('intention', written); setMorningStatus('done'); setEditIntent(false); }}
+              status={morningStatus}
+              onOpenAlarm={() => setAlarmTarget('morning')} />;
+  } else if (resolved === 'nightHome') {
+    view = <HomeNight {...homeProps} />;
+  } else if (resolved === 'night') {
+    view = <NightRitual hour={liveHour} mode={mode}
+              onBack={goHome} onComplete={() => setNightStatus('done')}
+              onOpenAlarm={() => setAlarmTarget('night')}
+              intention={t.intention} notes={notes}
+              openaiKey={openaiKey}
+              obsidianFolder={t.obsidianFolder} dateLabel={t.dateLabel} />;
+  } else if (resolved === 'settings') {
+    view = <ConfigureRituais mode={mode} onBack={goHome} rituals={rituals} setRituals={setRituals} />;
+  } else if (resolved === 'insights') {
+    view = <InsightsScreen mode={mode} onBack={goHome} notes={notes} />;
+  }
+
+  const currentAlarmRitual = alarmTarget ? rituals.find(r => r.id === alarmTarget) : null;
+
+  if (!openaiKey) return <SetupScreen onSave={k => setOpenaiKey(k)} />;
+
+  return (
+    <div style={{ minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', background: 'radial-gradient(60% 60% at 50% 0%, #1a1a22 0%, #0a0a0e 70%), #0a0a0e', boxSizing: 'border-box' }}>
+      <style>{`
+        @keyframes ritualBlink { 0%,49%{opacity:1}50%,100%{opacity:0} }
+        @keyframes ritualGreet { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes ritualSlideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        @keyframes ritualFadeIn { from{opacity:0} to{opacity:1} }
+        @keyframes ritualPulse { 0%{box-shadow:0 0 0 0 rgba(214,88,74,.55)} 70%{box-shadow:0 0 0 16px rgba(214,88,74,0)} 100%{box-shadow:0 0 0 0 rgba(214,88,74,0)} }
+        textarea::placeholder,input::placeholder{color:${palette(mode).fgFaint}}
+        ::selection{background:rgba(255,255,255,.25)}
+      `}</style>
+
+      {!t.showAllScreens ? (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+          <PhoneShell hour={liveHour} screenLabel={resolved} overlay={resolved !== 'morningHome' && resolved !== 'nightHome'}>
+            {view}
+            {composerOpen && (resolved === 'morningHome' || resolved === 'nightHome') && (
+              <NoteComposer mode={mode} hour={liveHour} onSave={addNote} onClose={() => setComposerOpen(false)} />
+            )}
+            {menuOpen && (
+              <MenuSheet mode={mode} onClose={() => setMenuOpen(false)}
+                onNav={id => { setMenuOpen(false); setScreen(id); if (id === 'settings' || id === 'insights') { const isNight = mode === 'dark'; setTweak({ hour: isNight ? 22 : 10.16, autoTime: false }); } }} />
+            )}
+            {alarmTarget && currentAlarmRitual && (
+              <AlarmSheet mode={mode}
+                ritualName={currentAlarmRitual.name}
+                currentAlarm={currentAlarmRitual.alarm}
+                onSave={time => saveAlarm(alarmTarget, time)}
+                onClose={() => setAlarmTarget(null)} />
+            )}
+          </PhoneShell>
+          <ScreenSwitcher current={resolved} onPick={id => {
+            setScreen(id);
+            const isNight = id === 'nightHome' || id === 'night' || id === 'settings' || id === 'insights';
+            const target = isNight ? 22 : 10.16;
+            if (Math.abs(((t.hour - target + 24) % 24)) > 0.5) setTweak({ hour: target, autoTime: false });
+          }} />
+        </div>
+      ) : (
+        <AllScreensGrid hour={liveHour} t={t} rituals={rituals} />
+      )}
+      <RitualTweaks t={t} setTweak={setTweak} />
+    </div>
+  );
+}
+
+function ScreenSwitcher({ current, onPick }) {
+  const items = [
+    { id: 'morningHome', label: 'Home · morning' },
+    { id: 'morning', label: 'Morning ritual' },
+    { id: 'nightHome', label: 'Home · night' },
+    { id: 'night', label: 'Night ritual' },
+  ];
+  return (
+    <div style={{ display: 'flex', gap: 6, padding: 4, borderRadius: 999, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', backdropFilter: 'blur(10px)' }}>
+      {items.map(it => (
+        <button key={it.id} onClick={() => onPick(it.id)} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 500, padding: '8px 14px', borderRadius: 999, border: 'none', cursor: 'pointer', background: current === it.id ? '#f4eef8' : 'transparent', color: current === it.id ? '#1a1410' : 'rgba(244,238,248,0.7)', transition: 'all 0.15s' }}>{it.label}</button>
+      ))}
+    </div>
+  );
+}
+
+function AllScreensGrid({ hour, t, rituals }) {
+  const sky = skyAt(hour);
+  const mode = sky.mode;
+  const empty = [];
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, auto)', gap: 28, alignItems: 'start' }}>
+      <PhoneShell hour={hour} screenLabel="01 Home morning">
+        <HomeMorning hour={hour} dateLabel={t.dateLabel} mode={mode} morningStatus="todo" nightStatus="todo"
+          intention={t.intention} notes={empty} onAddNote={() => {}} onEditIntention={() => {}} onOpenMenu={() => {}} rituals={rituals} onNav={() => {}} />
+      </PhoneShell>
+      <PhoneShell hour={hour} screenLabel="02 Morning ritual" overlay>
+        <MorningRitual hour={hour} intention={t.intention} dateLabel={t.dateLabel} mode={mode}
+          onBack={() => {}} onComplete={() => {}} status="done" startEditing={false} onOpenAlarm={() => {}} />
+      </PhoneShell>
+      <PhoneShell hour={hour} screenLabel="03 Home night">
+        <HomeNight hour={hour} intention={t.intention} dateLabel={t.dateLabel} mode={mode}
+          morningStatus="done" nightStatus="todo" notes={empty} onAddNote={() => {}} onEditIntention={() => {}} onOpenMenu={() => {}} rituals={rituals} onNav={() => {}} />
+      </PhoneShell>
+      <PhoneShell hour={hour} screenLabel="04 Night ritual" overlay>
+        <NightRitual hour={hour} mode={mode} onBack={() => {}} onComplete={() => {}} onOpenAlarm={() => {}} />
+      </PhoneShell>
+    </div>
+  );
+}
+
+function RitualTweaks({ t, setTweak }) {
+  const presets = [
+    { h: 6, name: '06h · pre-sunrise' }, { h: 9, name: '09h · morning' },
+    { h: 12, name: '12h · midday' }, { h: 15, name: '15h · afternoon' },
+    { h: 18, name: '18h · sunset' }, { h: 20, name: '20h · dusk' },
+    { h: 22, name: '22h · night' }, { h: 0, name: '00h · late night' },
+  ];
+  return (
+    <TweaksPanel title="Tweaks">
+      <TweakSection label="Time of day">
+        <TweakSlider label="Hour" value={t.hour} min={0} max={23.99} step={0.05} onChange={v => setTweak({ hour: v, autoTime: false })} />
+        <TweakToggle label="Drift in real time" value={t.autoTime} onChange={v => setTweak('autoTime', v)} />
+        <TweakSlider label="Drift speed (in-app min/sec)" value={t.speed} min={1} max={1800} step={1} onChange={v => setTweak('speed', v)} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 6, marginTop: 8 }}>
+          {presets.map(p => (
+            <button key={p.h} onClick={() => setTweak({ hour: p.h, autoTime: false })} style={{ fontFamily: "'DM Sans',sans-serif", fontSize: 11.5, fontWeight: 500, padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: Math.abs(((t.hour - p.h + 24) % 24)) < 0.1 ? 'rgba(255,255,255,0.16)' : 'transparent', color: '#fff', cursor: 'pointer', textAlign: 'left' }}>{p.name}</button>
+          ))}
+        </div>
+      </TweakSection>
+      <TweakSection label="Atmosphere">
+        <TweakToggle label="Grain texture" value={t.showGrain} onChange={v => setTweak('showGrain', v)} />
+        <TweakToggle label="Show all 4 screens" value={t.showAllScreens} onChange={v => setTweak('showAllScreens', v)} />
+      </TweakSection>
+      <TweakSection label="Content">
+        <TweakText label="Intention" value={t.intention} onChange={v => setTweak('intention', v)} />
+        <TweakText label="Date label" value={t.dateLabel} onChange={v => setTweak('dateLabel', v)} />
+      </TweakSection>
+      <TweakSection label="Integrations">
+        <TweakText label="OpenAI key" value={t.openaiKey} placeholder="sk-..." onChange={v => setTweak('openaiKey', v)} />
+        <TweakText label="Obsidian key" value={t.obsidianKey} placeholder="token do plugin" onChange={v => setTweak('obsidianKey', v)} />
+        <TweakText label="Obsidian folder" value={t.obsidianFolder} placeholder="Rituais" onChange={v => setTweak('obsidianFolder', v)} />
+      </TweakSection>
+    </TweaksPanel>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
